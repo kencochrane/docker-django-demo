@@ -1,0 +1,49 @@
+version: "2"
+services:
+  db:
+    image: postgres:9.5.0
+    environment:
+       POSTGRES_USER: myuser
+       POSTGRES_PASSWORD: mypassword
+  queue:
+    image: redis:3.0.7-alpine
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    working_dir: "/home/docker/dockerdemo/"
+    volumes:
+      - .:/home/docker/
+    ports:
+      - "8000:8000"
+    links:
+      - db
+      - queue
+    depends_on:
+      - db
+      - queue
+  worker:
+    build: .
+    command: /usr/local/bin/celery -A dockerdemo worker -l info
+    working_dir: "/home/docker/dockerdemo/"
+    volumes:
+      - .:/home/docker/
+    links:
+      - db
+      - queue
+    depends_on:
+      - db
+      - queue
+    environment:
+      C_FORCE_ROOT: 'true'
+      DJANGO_SETTINGS_MODULE: "dockerdemo.settings"
+  cron:
+    build: .
+    command: sh /home/docker/config/scripts/init-cron.sh
+    volumes:
+      - .:/home/docker/
+    links:
+      - db
+    depends_on:
+      - db
+    environment:
+      DJANGO_SETTINGS_MODULE: "dockerdemo.settings"

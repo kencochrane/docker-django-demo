@@ -1,0 +1,1 @@
+5 * * * * cd /home/docker/dockerdemo && /usr/local/bin/python manage.py cleanup_old_votes >> /var/log/cleanup_old_votes.log
